@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 gt_pipeline = ('shub://TomHarrop/honeybee-genotype-pipeline:'
-               'honeybee_genotype_pipeline_v0.0.10')
+               'honeybee_genotype_pipeline_v0.0.11')
 
 rule target:
     input:
