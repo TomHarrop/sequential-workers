@@ -4,7 +4,7 @@ from pathlib import Path
 
 gt_pipeline = ('shub://TomHarrop/honeybee-genotype-pipeline:'
                'honeybee_genotype_pipeline_v0.0.11')
-samtools = 'shub://TomHarrop/align-utils:samtools_1.9'
+samtools = 'shub://TomHarrop/align-utils:samtools_1.10'
 r = 'shub://TomHarrop/r-containers:r_3.6.3'
 
 rule target:
