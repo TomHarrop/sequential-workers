@@ -5,20 +5,32 @@ from pathlib import Path
 gt_pipeline = ('shub://TomHarrop/honeybee-genotype-pipeline:'
                'honeybee_genotype_pipeline_v0.0.11')
 samtools = 'shub://TomHarrop/align-utils:samtools_1.9'
-
+r = 'shub://TomHarrop/r-containers:r_3.6.3'
 
 rule target:
     input:
-        'output/020_filtering/calls.filtered.vcf.gz'
+        'output/020_filtering/maf.csv'
 
 
-# populations is filtering out some of the SNPs that I want for bayescan /
-# plots, use bcftools filter to make a VCF for that
+rule generate_maf_table:
+    input:
+        vcf = 'output/020_filtering/calls.filtered.vcf.gz'
+    output:
+        maf_mat = 'output/020_filtering/maf.Rds',
+        maf_dt = 'output/020_filtering/maf.csv'
+    log:
+        'output/logs/generate_maf_table.R'
+    singularity:
+        r
+    script:
+        'src/generate_maf_table.R'
+
+
 rule filter_vcf:
     input:
         vcf = 'output/010_genotypes/calls.vcf.gz',
     output:
-        'output/020_filtering/calls.filtered.vcf'
+        temp('output/020_filtering/calls.filtered.vcf')
     params:
         min_maf = 0.05,
         f_missing = 0.2
