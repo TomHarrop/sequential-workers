@@ -9,7 +9,9 @@ r = 'shub://TomHarrop/r-containers:r_3.6.3'
 
 rule target:
     input:
-        'output/020_filtering/maf.csv'
+        'output/020_filtering/maf.csv',
+        'output/020_filtering/calls.filtered.stats.txt',
+        'output/010_genotypes/calls.stats.txt'
 
 
 rule generate_maf_table:
@@ -60,6 +62,7 @@ checkpoint genotype:
         # fai = 'output/010_genotypes/{ref}/015_ref/ref.fasta.fai',
         # ref = 'output/010_genotypes/{ref}/015_ref/ref.fasta',
         vcf = 'output/010_genotypes/calls.vcf.gz',
+        tbi = 'output/010_genotypes/calls.vcf.gz.tbi'
     params:
         wd = 'output/010_genotypes',
         ploidy = '20'
@@ -78,6 +81,21 @@ checkpoint genotype:
         '--threads {threads} '
         '--restart_times 1 '
         '&> {log}'
+
+
+# generic vcf stats
+rule generic_vcf_stats:
+    input:
+        vcf = Path('{folder}', '{file}.vcf.gz'),
+        tbi = Path('{folder}', '{file}.vcf.gz.tbi')
+    wildcard_constraints:
+        file = '(?!populations_sorted).*'   # this is a "not" to exclude files
+    output:
+        stats = Path('{folder}', '{file}.stats.txt')
+    singularity:
+        samtools
+    shell:
+        'bcftools stats {input.vcf} > {output.stats}'
 
 
 # generic vcf index
