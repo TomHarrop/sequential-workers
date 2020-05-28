@@ -50,6 +50,9 @@ rule filter_vcf:
         '> {output} '
         '2> {log}'
 
+# plot depth
+
+
 
 checkpoint genotype:
     input:
@@ -95,7 +98,7 @@ rule generic_vcf_stats:
     singularity:
         samtools
     shell:
-        'bcftools stats {input.vcf} > {output.stats}'
+        'bcftools stats --verbose {input.vcf} > {output.stats}'
 
 
 # generic vcf index
