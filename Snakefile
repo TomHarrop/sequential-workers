@@ -100,7 +100,7 @@ rule generic_vcf_stats:
     shell:
         'bcftools stats '
         '--verbose '
-        '-s <( bcftools query -l {input.vcf} ) '
+        '-S <( bcftools query -l {input.vcf} ) '
         '{input.vcf} '
         '> {output.stats}'
 
