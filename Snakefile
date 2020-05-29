@@ -4,7 +4,8 @@ from pathlib import Path
 
 gt_pipeline = ('shub://TomHarrop/honeybee-genotype-pipeline:'
                'honeybee_genotype_pipeline_v0.0.11')
-samtools = 'shub://TomHarrop/align-utils:samtools_1.10'
+# samtools = 'shub://TomHarrop/align-utils:samtools_1.10'
+samtools = 'samtools_1.10.sif'      # test with local image
 r = 'shub://TomHarrop/r-containers:r_3.6.3'
 
 rule target:
@@ -94,7 +95,8 @@ rule generic_vcf_stats:
     wildcard_constraints:
         file = '(?!populations_sorted).*'   # this is a "not" to exclude files
     output:
-        stats = Path('{folder}', '{file}.stats.txt')
+        stats = Path('{folder}', '{file}.stats.txt'),
+        plot = directory(Path('{folder}', '{file}.plots'))
     singularity:
         samtools
     shell:
@@ -102,7 +104,8 @@ rule generic_vcf_stats:
         '--verbose '
         '-S <( bcftools query -l {input.vcf} ) '
         '{input.vcf} '
-        '> {output.stats}'
+        '> {output.stats} ; '
+        'plot-vcfstats -s -v -p {output.plot} {output.stats} '
 
 
 # generic vcf index
