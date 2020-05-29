@@ -2,25 +2,32 @@
 
 from pathlib import Path
 
+
+def resolve_path(x):
+    return Path(x).resolve().as_posix()
+
+
 gt_pipeline = ('shub://TomHarrop/honeybee-genotype-pipeline:'
                'honeybee_genotype_pipeline_v0.0.11')
+plink = 'shub://MarissaLL/singularity-containers:plink_1.9'
 samtools = ('shub://TomHarrop/align-utils:samtools_1.10'
             '@d52e0b68cf74f659181d95beac31427c1ade7947')
 r = 'shub://TomHarrop/r-containers:r_3.6.3'
 
 rule target:
     input:
-        'output/020_filtering/maf.csv',
+        'output/040_maf/maf.Rds',
         'output/020_filtering/calls.filtered.stats.txt',
-        'output/010_genotypes/calls.stats.txt'
+        'output/010_genotypes/calls.stats.txt',
+        'output/030_pruning/calls.pruned.stats.txt'
 
 
 rule generate_maf_table:
     input:
-        vcf = 'output/020_filtering/calls.filtered.vcf.gz'
+        vcf = 'output/030_pruning/calls.pruned.vcf.gz'
     output:
-        maf_mat = 'output/020_filtering/maf.Rds',
-        maf_dt = 'output/020_filtering/maf.csv'
+        maf_mat = 'output/040_maf/maf.Rds',
+        maf_dt = 'output/040_maf/maf.csv'
     log:
         'output/logs/generate_maf_table.R'
     singularity:
@@ -29,6 +36,51 @@ rule generate_maf_table:
         'src/generate_maf_table.R'
 
 
+# prune LD
+rule prune_vcf:
+    input:
+        vcf = 'output/020_filtering/calls.filtered.vcf.gz',
+        prune = 'output/030_pruning/calls.prune.in'
+    output:
+        vcf = 'output/030_pruning/calls.pruned.vcf'
+    log:
+        'output/logs/prune_vcf.log'
+    singularity:
+        samtools
+    shell:
+        'bcftools view '
+        '-i \'ID=@{input.prune}\' '
+        '{input.vcf} '
+        '> {output.vcf} '
+        '2> {log}'
+
+
+rule list_pruned_snps:
+    input:
+        vcf = 'output/020_filtering/calls.filtered.vcf.gz'
+    output:
+        'output/030_pruning/calls.prune.in'
+    params:
+        vcf = lambda wildcards, input: resolve_path(input.vcf),
+        wd = 'output/030_pruning',
+        indep = '50 10 0.1'     # 50 kb window, 10 SNPs, r2 < 0.1
+    log:
+        resolve_path('output/logs/list_pruned_snps.log')
+    singularity:
+        plink
+    shell:
+        'cd {params.wd} || exit 1 ; '
+        'plink '
+        '--vcf {params.vcf} '
+        '--double-id '
+        '--allow-extra-chr '
+        '--set-missing-var-ids @:# '
+        '--indep-pairwise {params.indep} '
+        '--out calls '
+        '&> {log}'
+
+
+# filter sites
 rule filter_vcf:
     input:
         vcf = 'output/010_genotypes/calls.vcf.gz',
