@@ -19,12 +19,12 @@ rule target:
         'output/040_maf/maf.Rds',
         'output/020_filtering/calls.filtered.stats.txt',
         'output/010_genotypes/calls.stats.txt',
+        'output/030_pruning/calls.pruned.stats.txt'
         
-
 
 rule generate_maf_table:
     input:
-        vcf = 'output/020_filtering/calls.filtered.vcf.gz'
+        vcf = 'output/030_pruning/calls.pruned.vcf.gz'
     output:
         maf_mat = 'output/040_maf/maf.Rds',
         maf_dt = 'output/040_maf/maf.csv'
@@ -36,11 +36,10 @@ rule generate_maf_table:
         'src/generate_maf_table.R'
 
 
-# prune LD (doesn't work with this format)
+# prune LD with bcftools
 rule prune_vcf:
     input:
-        vcf = 'output/020_filtering/calls.filtered.vcf.gz',
-        prune = 'output/030_pruning/calls.prune.in'
+        vcf = 'output/020_filtering/calls.filtered.vcf.gz'
     output:
         vcf = 'output/030_pruning/calls.pruned.vcf'
     log:
@@ -48,36 +47,56 @@ rule prune_vcf:
     singularity:
         samtools
     shell:
-        'bcftools view '
-        '-i \'ID=@{input.prune}\' '
-        '{input.vcf} '
-        '> {output.vcf} '
+        'bcftools +prune '
+        '--max-LD 0.1 '
+        '--window 50 '
+        '{input} '
+        '> {output} '
         '2> {log}'
 
 
-rule list_pruned_snps:
-    input:
-        vcf = 'output/020_filtering/calls.filtered.vcf.gz'
-    output:
-        'output/030_pruning/calls.prune.in'
-    params:
-        vcf = lambda wildcards, input: resolve_path(input.vcf),
-        wd = 'output/030_pruning',
-        indep = '50 10 0.1'     # 50 kb window, 10 SNPs, r2 < 0.1
-    log:
-        resolve_path('output/logs/list_pruned_snps.log')
-    singularity:
-        plink
-    shell:
-        'cd {params.wd} || exit 1 ; '
-        'plink '
-        '--vcf {params.vcf} '
-        '--double-id '
-        '--allow-extra-chr '
-        '--set-missing-var-ids @:# '
-        '--indep-pairwise {params.indep} '
-        '--out calls '
-        '&> {log}'
+# prune LD (doesn't work with this format)
+# rule prune_vcf:
+#     input:
+#         vcf = 'output/020_filtering/calls.filtered.vcf.gz',
+#         prune = 'output/030_pruning/calls.prune.in'
+#     output:
+#         vcf = 'output/030_pruning/calls.pruned.vcf'
+#     log:
+#         'output/logs/prune_vcf.log'
+#     singularity:
+#         samtools
+#     shell:
+#         'bcftools view '
+#         '-i \'ID=@{input.prune}\' '
+#         '{input.vcf} '
+#         '> {output.vcf} '
+#         '2> {log}'
+
+
+# rule list_pruned_snps:
+#     input:
+#         vcf = 'output/020_filtering/calls.filtered.vcf.gz'
+#     output:
+#         'output/030_pruning/calls.prune.in'
+#     params:
+#         vcf = lambda wildcards, input: resolve_path(input.vcf),
+#         wd = 'output/030_pruning',
+#         indep = '50 10 0.1'     # 50 kb window, 10 SNPs, r2 < 0.1
+#     log:
+#         resolve_path('output/logs/list_pruned_snps.log')
+#     singularity:
+#         plink
+#     shell:
+#         'cd {params.wd} || exit 1 ; '
+#         'plink '
+#         '--vcf {params.vcf} '
+#         '--double-id '
+#         '--allow-extra-chr '
+#         '--set-missing-var-ids @:# '
+#         '--indep-pairwise {params.indep} '
+#         '--out calls '
+#         '&> {log}'
 
 
 # filter sites
