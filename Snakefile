@@ -4,8 +4,8 @@ from pathlib import Path
 
 gt_pipeline = ('shub://TomHarrop/honeybee-genotype-pipeline:'
                'honeybee_genotype_pipeline_v0.0.11')
-# samtools = 'shub://TomHarrop/align-utils:samtools_1.10'
-samtools = 'samtools_1.10.sif'      # test with local image
+samtools = ('shub://TomHarrop/align-utils:samtools_1.10'
+            '@d52e0b68cf74f659181d95beac31427c1ade7947')
 r = 'shub://TomHarrop/r-containers:r_3.6.3'
 
 rule target:
@@ -46,13 +46,10 @@ rule filter_vcf:
         '-v snps '          # SNPs only
         '-m2 -M2 '          # biallelic sites only
         '--min-af {params.min_maf}:nonmajor '
-        '--exclude "F_MISSING>{params.f_missing}" '
+        '--exclude "F_MISSING>{params.f_missing} || FMT/DP>30 || QUAL<30" '
         '{input.vcf} '
         '> {output} '
         '2> {log}'
-
-# plot depth
-
 
 
 checkpoint genotype:
