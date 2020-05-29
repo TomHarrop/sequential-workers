@@ -83,7 +83,7 @@ rule list_pruned_snps:
 # filter sites
 rule filter_vcf:
     input:
-        vcf = 'output/010_genotypes/calls.vcf.gz',
+        vcf = 'output/tmp/calls.annotated.vcf',
     output:
         temp('output/020_filtering/calls.filtered.vcf')
     params:
@@ -101,6 +101,24 @@ rule filter_vcf:
         '--exclude "F_MISSING>{params.f_missing} || FMT/DP>30 || QUAL<30" '
         '{input.vcf} '
         '> {output} '
+        '2> {log}'
+
+rule annotate_loci:
+    input:
+        'output/010_genotypes/calls.vcf.gz'
+    output:
+        pipe('output/tmp/calls.annotated.vcf')
+    log:
+        'output/logs/annotate_loci.log'
+    singularity:
+        samtools
+    shell:
+        'bcftools annotate '
+        '-Ou '
+        '--set-id '
+        '+\'%CHROM\\_%POS\\_%REF\\_%FIRST_ALT\' '
+        '{input} '
+        '>> {output} '
         '2> {log}'
 
 
