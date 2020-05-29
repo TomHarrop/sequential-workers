@@ -19,12 +19,12 @@ rule target:
         'output/040_maf/maf.Rds',
         'output/020_filtering/calls.filtered.stats.txt',
         'output/010_genotypes/calls.stats.txt',
-        'output/030_pruning/calls.pruned.stats.txt'
+        
 
 
 rule generate_maf_table:
     input:
-        vcf = 'output/030_pruning/calls.pruned.vcf.gz'
+        vcf = 'output/020_filtering/calls.filtered.vcf.gz'
     output:
         maf_mat = 'output/040_maf/maf.Rds',
         maf_dt = 'output/040_maf/maf.csv'
@@ -36,7 +36,7 @@ rule generate_maf_table:
         'src/generate_maf_table.R'
 
 
-# prune LD
+# prune LD (doesn't work with this format)
 rule prune_vcf:
     input:
         vcf = 'output/020_filtering/calls.filtered.vcf.gz',
